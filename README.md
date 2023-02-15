@@ -4,7 +4,7 @@
 **Download Link:** https://drive.google.com/u/0/uc?id=1Ekh_r6zJhtbmd0OrFvpXJSafo_LCEqEL&export=download
 
 # About:
-Flourish (https://www.flourishsoftware.com/) is a popular Retail Point of Sale for Cannabis dispensaries, and it allows a user to export a store's inventory into an Excel file.
+Flourish (https://www.flourishsoftware.com/) is a popular Retail Point of Sale for Cannabis dispensaries, and it allows a user to export a store's inventory into an Excel file.  Using this exported file...
 
 This utility is used to configure a printable menu for a cannabis dispensary, and uses a pre-formatted template to create a nice-looking menu for customers to look at.  Not only is position on the menu--limited--possible, but discounts of the day can also quickly be applied, and will be reflected on the menu as being discounted (with the new price).
 
