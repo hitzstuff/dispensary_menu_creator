@@ -1,7 +1,7 @@
 # Dispensary Menu Creator
 **Version:** 0.1.0-beta
 
-**Download Link:** [https://drive.google.com/u/0/uc?id=1Ekh_r6zJhtbmd0OrFvpXJSafo_LCEqEL&export=download]
+**Download Link:** https://drive.google.com/u/0/uc?id=1Ekh_r6zJhtbmd0OrFvpXJSafo_LCEqEL&export=download
 
 # About:
 Flourish (https://www.flourishsoftware.com/) is a popular Retail Point of Sale for Cannabis dispensaries, and it allows a user to export a store's inventory into an Excel file.  Using this exported file...
