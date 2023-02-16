@@ -8,9 +8,7 @@ Flourish (https://www.flourishsoftware.com/) is a popular Retail Point of Sale f
 
 This utility is used to configure a printable menu for a cannabis dispensary, and uses a pre-formatted template to create a nice-looking menu for customers to look at.  Not only is position on the menu--limited--possible, but discounts of the day can also quickly be applied, and will be reflected on the menu as being discounted (with the new price).
 
-Future releases and source code are available on my GitHub project page:
-
-https://github.com/hitzstuff/dispensary_menu_creator
+Future releases and source code will be made available on this GitHub project page.
 
 This program is Beta, and has no warranty.  It may not function as intended.
 The author takes no responsibility for any issues that may occur.
