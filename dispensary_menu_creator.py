@@ -17,7 +17,7 @@ MENU_LOGO = pathlib.PurePath(MAIN_DIRECTORY, 'img', 'menu_logo.png')
 PROGRAM_LOGO = pathlib.PurePath(MAIN_DIRECTORY, 'img', 'program_logo.png')
 THEME = 'SystemDefault1'
 PROGRAM_NAME = 'Dispensary Menu Creator'
-GITHUB_LINK = 'https://github.com/hitzstuff/dispensary_tool'
+GITHUB_LINK = 'https://github.com/hitzstuff/dispensary_menu_creator'
 CATEGORIES_FILE = pathlib.PurePath(MAIN_DIRECTORY, 'config', 'categories.cfg')
 
 MENU_BAR = [
@@ -43,39 +43,39 @@ DOWNLOAD_LINK = ((DOWNLOAD_LINK.split()[-1][:-4]).split('>')[1]).split('<')[0]
 
 # Preformatted string for the 'About' menu
 ABOUT = (
-    f'Current Version:\t{VERSION}\n' +
-    f'Latest Version:\t\t{NEWEST_VERSION}\n\n'
+    f'Current Version:\n{VERSION}\n\n' +
+    f'Latest Version:\n{NEWEST_VERSION}\n\n'
     +
-    'Developed by:\t Aaron Hitzeman\n' +
-    '\t\t\taaron.hitzeman@gmail.com\n\n'
+    'Developed by:\nAaron Hitzeman\n' +
+    'aaron.hitzeman@gmail.com\n\n'
     +
     'Visit the GitHub page for more information.'
 )
 
 # Preformatted string for the 'About' menu when an update is available
 ABOUT_UPDATE = (
-    f'Current Version:\t{VERSION}\n' +
-    f'Latest Version:\t\t{NEWEST_VERSION}\n\n'
+    f'Current Version:\n{VERSION}\n\n' +
+    f'Latest Version:\n{NEWEST_VERSION}\n\n'
     +
     'A newer version of this program is available!' +
     '  Please use the "Check for Updates" button to download the latest version.\n\n'
     +
-    'Developed by:\t Aaron Hitzeman\n' +
-    '\t\t\taaron.hitzeman@gmail.com\n\n'
+    'Developed by:\nAaron Hitzeman\n' +
+    'aaron.hitzeman@gmail.com\n\n'
     +
     'Visit the GitHub page for more information.'
 )
 
 # Preformatted update messages
 UPDATE_MSG_YES = (
-    f'Current Version: {VERSION}\n' +
-    f'Latest Version: {NEWEST_VERSION}\n\n'
+    f'Current Version:\n{VERSION}\n\n' +
+    f'Latest Version:\n{NEWEST_VERSION}\n\n'
     +
     'A newer version of this program is available!  Would you like to download it?'
 )
 UPDATE_MSG_NO = (
-    f'Current Version: {VERSION}\n' +
-    f'Latest Version: {NEWEST_VERSION}\n\n'
+    f'Current Version:\n{VERSION}\n\n' +
+    f'Latest Version:\n{NEWEST_VERSION}\n\n'
     +
     'There are currently no updates available.'
 )
@@ -96,7 +96,7 @@ def create_menu_file():
     day = today.strftime('%d')
     year = today.strftime('%Y')
     name = f'Menu {month}-{day}-{year}.xlsx'
-    file_path = pathlib.PurePath(MAIN_DIRECTORY, name)
+    file_path = pathlib.PurePath(MAIN_DIRECTORY, '_schedules', name)
     shutil.copy(menu_template, file_path)
     menu_file = openpyxl.load_workbook(file_path)
     return menu_file, file_path
@@ -117,13 +117,16 @@ def df_clean(data):
         'strain',
         'unit_price',
         'thc',
-        'category'
+        'category',
+        'available',
+        'lock_code'
         ], axis=1).reset_index(drop=True)
     dataframe['thc'] = dataframe['thc'].round(1)
     dataframe.category = dataframe.category.replace('Raw Pre-Roll', 'Pre-Roll')
     dataframe.category = dataframe.category.replace('Vape Cart Distillate', 'Vape Cart')
     dataframe = dataframe.drop_duplicates(subset=['sku_retail_display_name'])
     dataframe = dataframe.reset_index(drop=True)
+    dataframe[dataframe['sku_retail_display_name'].str.contains('EPO') == False]
     return dataframe
 
 def new_categories(dataframe):
@@ -166,11 +169,10 @@ def build_menu(dataframe):
     '''Organizes a DataFrame into a structure suitable for a menu'''
     cleaned_packages = df_clean(dataframe)
     dataframe = cleaned_packages
-    sku = dataframe.sku_retail_display_name.unique()
     brands = []
     sizes = []
     word_counts = []
-    for _ in sku:
+    for i, _ in enumerate(dataframe.sku_retail_display_name.unique()):
         brand = str(_).split()[0].replace("['", "")
         size = str(_).split()[1]
         word_count = len(_)
@@ -178,15 +180,13 @@ def build_menu(dataframe):
         sizes.append(size)
         word_counts.append(word_count)
     dataframe['brand'] = brands
-    dataframe = dataframe.query('brand != "EPO"').reset_index(drop=True)
     dataframe['product_size'] = sizes
-    dataframe['word_count'] = word_counts
+    dataframe['word_count'] = word_counts  
     sku = dataframe['sku_retail_display_name']
     brand = dataframe['brand']
     size = dataframe['product_size']
-    category = dataframe['category']
     product_types = []
-    for i, _ in enumerate(dataframe['sku_retail_display_name']):
+    for i, _ in enumerate(dataframe.sku_retail_display_name.unique()):
         par_beg0 = _.find('(') + 1
         par_end0 = _.find(')')
         par_beg1 = _.find('(', par_beg0 + 1) + 1
@@ -204,7 +204,7 @@ def build_menu(dataframe):
             product_types.append(_[par_beg1:par_end1])
             dataframe['thc'][i] = str(_[par_beg0:par_end0])
     dataframe['product_type'] = product_types
-    for i, _ in enumerate(size):
+    for i, _ in enumerate(dataframe['product_size']):
         if 'mg' in _:
             dataframe['thc'][i] = str(_)
             if 'ct' in sku[i].split()[-1]:
@@ -212,7 +212,7 @@ def build_menu(dataframe):
             else:
                 dataframe['product_size'][i] = '1ct'
     price = dataframe['unit_price']
-    for i, _ in enumerate(category):
+    for i, _ in enumerate(dataframe['category']):
         dataframe['category'][i] = f'{price[i]} {brand[i]} {size[i]} {_}'
     for i, _ in enumerate(dataframe['strain']):
         if str(_) == 'nan' or str(_) == '':
@@ -237,8 +237,9 @@ def build_menu(dataframe):
                 'thc'
                 ], axis=1).reset_index(drop=True)
     dataframe = coral_reefer_fix(dataframe)
-    dataframe.sort_values(by = ['category', 'strain'], inplace = True)
-    dataframe.sort_values(by = ['unit_price', 'thc'], ascending=False)
+    dataframe = dataframe.query('brand != "EPO"').reset_index(drop=True)
+    dataframe.sort_values(by = ['category', 'strain'], inplace=True)
+    dataframe.sort_values(by = ['unit_price', 'thc', 'product_type'], ascending=False, inplace=True)
     return dataframe
 
 def save_product_type(sheet, menu_category, column, first_row, last_row):
@@ -391,7 +392,6 @@ def save_all(full_menu):
             if category != '':
                 discount = find_discount(category)
                 save_menu(workbook, workbook_path, full_menu, category, page, menu, discount)
-    sg.popup(f'The menu was successfully saved.\n\nParent Folder: {MAIN_DIRECTORY}', title='')
     return None
 
 def create_window(title, layout, program_icon=None, background_color='#FFF'):
@@ -509,7 +509,7 @@ def load_categories():
         with open(file, 'r', encoding='UTF-8') as file:
             categories = json_load(file)
     except FileNotFoundError as error:
-        sg.popup(f'exception {error}\n\nNo categories file found.', title='')
+        sg.popup(f'exception {error}\n\nNo categories file found.', title='', font = ('Open Sans', 12))
     return categories
 
 def save_discounts(discount_values, overall_discount):
@@ -754,7 +754,7 @@ def discount_config():
                 discounts = load_discounts()
                 for i, _ in enumerate(categories):
                     window[f'-{i}-'].update(value = discounts[i])
-                sg.popup('Discounts were successfully saved.', title='')
+                sg.popup('Discounts were successfully saved.', title='', font = ('Open Sans', 12))
             if event == '-CLEAR-':
                 for i in range(0, len(categories)):
                     window[f'-{i}-'].update(value = '')
@@ -763,12 +763,14 @@ def discount_config():
         except ValueError as v_error:
             sg.popup_error(
                 f'The value {v_error} was out of bounds.',
-                title = 'Value Error'
+                title = 'Value Error',
+                font = ('Open Sans', 12)
                 )
         except TypeError as t_error:
             sg.popup_error(
                 f'{t_error} was an improper data type.',
-                title = 'Type Error'
+                title = 'Type Error',
+                font = ('Open Sans', 12)
                 )
     window.close()
 
@@ -1222,21 +1224,23 @@ def cell_map_config():
                 save_mapping(page, menu, mapping, mapping_values)
                 try:
                     save_alias(category, str(values['-CATEGORY_ALIAS-']))
-                    sg.popup('Mappings were successfully saved.', title='')
+                    sg.popup('Mappings were successfully saved.', title='', font = ('Open Sans', 12))
                 except KeyError:
                     pass
             if event == '-UNASSIGN_MENU-':
                 unassign_menu(page, menu)
-                sg.popup(f'The category on...\n\nPage: {page}\nMenu: {menu}\n\nWas successfully unassigned.', title='')
+                sg.popup(f'The category on...\n\nPage: {page}\nMenu: {menu}\n\nWas successfully unassigned.', title='', font = ('Open Sans', 12))
         except ValueError as v_error:
             sg.popup_error(
                 f'The value {v_error} was out of bounds.',
-                title = 'Value Error'
+                title = 'Value Error',
+                font = ('Open Sans', 12)
                 )
         except TypeError as t_error:
             sg.popup_error(
                 f'{t_error} was an improper data type.',
-                title = 'Type Error'
+                title = 'Type Error',
+                font = ('Open Sans', 12)
                 )
     window.close()
 
@@ -1292,7 +1296,8 @@ def main():
                     answer = sg.popup_yes_no(
                         UPDATE_MSG_YES,
                         title = 'Update Available',
-                        keep_on_top = True
+                        keep_on_top = True,
+                        font = ('Open Sans', 12)
                     )
                     if answer == 'Yes':
                         webbrowser.open(DOWNLOAD_LINK)
@@ -1300,7 +1305,8 @@ def main():
                     sg.popup(
                         UPDATE_MSG_NO,
                         title = 'No Updates Available',
-                        keep_on_top = True
+                        keep_on_top = True,
+                        font = ('Open Sans', 12)
                     )
                 window.close()
                 window = None
@@ -1311,13 +1317,15 @@ def main():
                     sg.popup(
                         ABOUT_UPDATE,
                         title = f'{PROGRAM_NAME}  -  New Version Available',
-                        keep_on_top = True
+                        keep_on_top = True,
+                        font = ('Open Sans', 12)
                     )
                 else:
                     sg.popup(
                         ABOUT,
                         title = f'{PROGRAM_NAME}',
-                        keep_on_top = True
+                        keep_on_top = True,
+                        font = ('Open Sans', 12)
                         )
                 window.close()
                 window = None
@@ -1334,6 +1342,8 @@ def main():
                 save_all(full_menu)
                 window.close()
                 window = None
+                save_location = pathlib.PurePath(MAIN_DIRECTORY, '_schedules')
+                sg.popup(f'The menu was successfully saved to: {save_location}', title='', font = ('Open Sans', 12))
             if event == 'Menu Mapping Configuration':
                 window.close()
                 cell_map_config()
@@ -1345,14 +1355,24 @@ def main():
         except ValueError as v_error:
             sg.popup_error(
                 f'The value {v_error} was out of bounds.',
-                title = 'Value Error'
+                title = 'Value Error',
+                font = ('Open Sans', 12)
                 )
         except TypeError as t_error:
             sg.popup_error(
                 f'{t_error} was an improper data type.',
-                title = 'Type Error'
+                title = 'Type Error',
+                font = ('Open Sans', 12)
                 )
     window.close()
 
 if __name__ == '__main__':
     main()
+
+current_packages = pathlib.PurePath(MAIN_DIRECTORY, 'current_packages (3).xlsx')
+
+df = pd.read_excel(current_packages, sheet_name = 'All Packages')
+
+df = df_clean(df)
+
+menu = build_menu(df)
