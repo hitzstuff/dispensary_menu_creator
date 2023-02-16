@@ -181,7 +181,7 @@ def build_menu(dataframe):
         word_counts.append(word_count)
     dataframe['brand'] = brands
     dataframe['product_size'] = sizes
-    dataframe['word_count'] = word_counts  
+    dataframe['word_count'] = word_counts
     sku = dataframe['sku_retail_display_name']
     brand = dataframe['brand']
     size = dataframe['product_size']
@@ -1224,12 +1224,16 @@ def cell_map_config():
                 save_mapping(page, menu, mapping, mapping_values)
                 try:
                     save_alias(category, str(values['-CATEGORY_ALIAS-']))
-                    sg.popup('Mappings were successfully saved.', title='', font = ('Open Sans', 12))
+                    sg.popup('Mappings were successfully saved.',
+                             title='',
+                             font = ('Open Sans', 12))
                 except KeyError:
                     pass
             if event == '-UNASSIGN_MENU-':
                 unassign_menu(page, menu)
-                sg.popup(f'The category on...\n\nPage: {page}\nMenu: {menu}\n\nWas successfully unassigned.', title='', font = ('Open Sans', 12))
+                sg.popup(f'The category on...\n\nPage: {page}\nMenu: {menu}\n\nWas successfully unassigned.',
+                         title='',
+                         font = ('Open Sans', 12))
         except ValueError as v_error:
             sg.popup_error(
                 f'The value {v_error} was out of bounds.',
@@ -1368,11 +1372,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-current_packages = pathlib.PurePath(MAIN_DIRECTORY, 'current_packages (3).xlsx')
-
-df = pd.read_excel(current_packages, sheet_name = 'All Packages')
-
-df = df_clean(df)
-
-menu = build_menu(df)
