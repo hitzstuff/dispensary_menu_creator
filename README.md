@@ -1,5 +1,5 @@
 # Dispensary Menu Creator
-**Version:** 0.1.1-beta
+**Version:** 0.1.2-beta
 
 **Download Link:** https://drive.google.com/u/0/uc?id=1l6ef6J4XSu-b70IfCGji8KMB_HLj3np5&export=download
 
