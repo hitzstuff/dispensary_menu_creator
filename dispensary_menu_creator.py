@@ -126,7 +126,8 @@ def df_clean(data):
     dataframe.category = dataframe.category.replace('Vape Cart Distillate', 'Vape Cart')
     dataframe = dataframe.drop_duplicates(subset=['sku_retail_display_name'])
     dataframe = dataframe.reset_index(drop=True)
-    dataframe[dataframe['sku_retail_display_name'].str.contains('EPO') == False]
+    # DELETE_ME: if nothing breaks next time EPO stuff comes in...
+    #dataframe[dataframe['sku_retail_display_name'].str.contains('EPO') == False]
     return dataframe
 
 def new_categories(dataframe):
@@ -344,7 +345,7 @@ def save_menu(workbook,
     # Filter the entire menu, selecting products from a specific category
     menu = full_menu[full_menu.category == menu_category]
     # Populate the variables that are consistently singular
-    if len(menu) > 0:
+    if len(menu) >= 0:
         try:
             discount_cell = f'{prod_col}{first_row - 1}'
             if sale_percent == 0:
@@ -360,11 +361,29 @@ def save_menu(workbook,
             unit_price = ''
             product_brand = ''
             discount_msg = ''
+        except IndexError:
+            unit_price = ''
+            product_brand = ''
+            discount_msg = ''
         # Overwrites the menu with new values
         save_product_type(sheet, menu, type_col, first_row, last_row)
         save_product_thc(sheet, menu, thc_col, first_row, last_row)
         save_product(sheet, menu, prod_col, first_row, last_row)
         sheet[unit_price_pos].value = unit_price
+        if sale_percent != 0 or sale_percent != '':
+            sheet[unit_price_pos].font = openpyxl.styles.Font(
+                'Bahnschrift',
+                size=18,
+                color='FF0000',
+                b=True
+                )
+        if sale_percent == 0 or sale_percent == '':
+            sheet[unit_price_pos].font = openpyxl.styles.Font(
+                'Bahnschrift',
+                size=18,
+                color='000000',
+                b=True
+                )
         sheet[category_pos].value = alias
         sheet[brand_pos].value = product_brand
         # Save the new values to the workbook
@@ -654,7 +673,8 @@ def discounts_layout():
             category = mapping['MMJ Product']
             if category != '':
                 alias = find_alias(category)
-                alias_list.append(alias)
+                brand = str(category).split()
+                alias_list.append(f'{brand[1]} {alias}')
     column = [
         [text_label(
             _, 30),
@@ -787,9 +807,10 @@ def table_categories():
         menu = locations[_][1]
         mapping = load_mapping(page, menu)
         name = mapping['MMJ Product']
-        name = find_alias(name)
+        alias = find_alias(name)
+        brand = str(name).split()
         if name != '':
-            categories.append(f'"{page} {menu}\t{name}"')
+            categories.append(f'"{page} {menu}\t{brand[1]}\t{alias}"')
     categories = np.array(categories)
     np.reshape(categories, (len(categories), 1))
     return categories, category_list
@@ -807,7 +828,7 @@ def cell_map_layout():
     sg.theme(THEME)
     menu_category_column = [
         [sg.Table(values = categories,
-                  headings = ['Menu\tCategory\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t'],
+                  headings = ['Menu\tBrand\t\tCategory\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t'],
                   justification = 'left',
                   key = '-TABLE-',
                   enable_events = True,
@@ -1254,7 +1275,7 @@ def main_layout():
     layout = [
         [sg.Menu(
             MENU_BAR,
-            font = ('Open Sans', 10, 'bold')
+            font = ('Open Sans', 10)
             )],
         [sg.Image(rf'{PROGRAM_LOGO}', background_color = '#FFF', pad = (5, (5, 0)))],
         [sg.Text('', background_color = '#FFF')],
