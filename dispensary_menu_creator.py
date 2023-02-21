@@ -1,5 +1,6 @@
 import shutil
 from datetime import date
+import time
 import pathlib
 import webbrowser
 from json import (load as json_load, dump as json_dump)
@@ -41,6 +42,24 @@ NEWEST_VERSION = NEWEST_VERSION.split()[-1][:-4]
 DOWNLOAD_LINK = str(parse_part[1])
 DOWNLOAD_LINK = ((DOWNLOAD_LINK.split()[-1][:-4]).split('>')[1]).split('<')[0]
 
+v1_stop = VERSION.find('-')
+v2_stop = NEWEST_VERSION.find('-')
+VERSION_1 = VERSION[0:v1_stop]
+VERSION_2 = NEWEST_VERSION[0:v2_stop]
+
+if VERSION_2 > VERSION_1:
+    VERSION_COLOR = '#CE275F'
+    VERSION_FONT_WEIGHT = 'bold'
+    VERSION_WIDTH = 55
+elif VERSION_1 > VERSION_2:
+    VERSION_COLOR = '#FCB400'
+    VERSION_FONT_WEIGHT = 'bold'
+    VERSION_WIDTH = 55
+else:
+    VERSION_COLOR = '#469BF1'
+    VERSION_FONT_WEIGHT = 'bold'
+    VERSION_WIDTH = 55
+
 # Preformatted string for the 'About' menu
 ABOUT = (
     f'Current Version:\n{VERSION}\n\n' +
@@ -48,6 +67,8 @@ ABOUT = (
     +
     'Developed by:\nAaron Hitzeman\n' +
     'aaron.hitzeman@gmail.com\n\n'
+    +
+    'Icons obtained from https://icons8.com\n\n'
     +
     'Visit the GitHub page for more information.'
 )
@@ -62,6 +83,8 @@ ABOUT_UPDATE = (
     +
     'Developed by:\nAaron Hitzeman\n' +
     'aaron.hitzeman@gmail.com\n\n'
+    +
+    'Icons obtained from https://icons8.com\n\n'
     +
     'Visit the GitHub page for more information.'
 )
@@ -82,7 +105,7 @@ UPDATE_MSG_NO = (
 
 def update_check():
     '''Checks the program's version against the one on the GitHub page'''
-    if VERSION != NEWEST_VERSION:
+    if VERSION_1 < VERSION_2:
         status = True
     else:
         status = False
@@ -96,7 +119,7 @@ def create_menu_file():
     day = today.strftime('%d')
     year = today.strftime('%Y')
     name = f'Menu {month}-{day}-{year}.xlsx'
-    file_path = pathlib.PurePath(MAIN_DIRECTORY, '_schedules', name)
+    file_path = pathlib.PurePath(MAIN_DIRECTORY, '_menus', name)
     shutil.copy(menu_template, file_path)
     menu_file = openpyxl.load_workbook(file_path)
     return menu_file, file_path
@@ -217,7 +240,11 @@ def build_menu(dataframe):
         dataframe['category'][i] = f'{price[i]} {brand[i]} {size[i]} {_}'
     for i, _ in enumerate(dataframe['strain']):
         if str(_) == 'nan' or str(_) == '':
-            dataframe['strain'][i] = str(dataframe['product_type'][i]) + ' Blend'
+            if dataframe['category'][i] == '30 HT 20ct Gummy':
+                stop = cleaned_packages.sku_retail_display_name.iloc[i].find('Gels') - 1
+                dataframe['strain'][i] = str(cleaned_packages.sku_retail_display_name.iloc[i][7:stop])
+            else:
+                dataframe['strain'][i] = str(dataframe['product_type'][i]) + ' Blend'
         if ('HYB' in str(_)[0:4]) or ('SAT' in str(_)[0:4]) or ('IND' in str(_)[0:4]):
             dataframe['strain'][i] = str(_)[4:]
         if 'THC' == _:
@@ -373,14 +400,14 @@ def save_menu(workbook,
         if sale_percent != 0 or sale_percent != '':
             sheet[unit_price_pos].font = openpyxl.styles.Font(
                 'Bahnschrift',
-                size=18,
+                size=19,
                 color='FF0000',
                 b=True
                 )
         if sale_percent == 0 or sale_percent == '':
             sheet[unit_price_pos].font = openpyxl.styles.Font(
                 'Bahnschrift',
-                size=18,
+                size=19,
                 color='000000',
                 b=True
                 )
@@ -391,12 +418,15 @@ def save_menu(workbook,
         workbook.close()
     return None
 
-def save_all(full_menu):
+def save_all(full_menu, window):
     '''Saves each menu to the Excel workbook'''
     workbook, workbook_path = create_menu_file()
     pages = [1, 2, 3, 4, 5]
     menus = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
-    for _ in pages:
+    for i, _ in enumerate(pages):
+        progress_amount = (100 / len(pages)) + (i * 100) / len(pages)
+        window['-MENU_STATUS-'].update(f'{progress_amount}%')
+        window['-P_BAR-'].update(current_count = progress_amount)
         page = _
         sheet = workbook[f'page_{_}']
         menu_logo = openpyxl.drawing.image.Image(str(MENU_LOGO))
@@ -628,9 +658,9 @@ def text_label(text, width):
                     justification='l',
                     size =  (width, 1),
                     background_color = '#FFF',
-                    text_color = '#000',
+                    text_color = '#1B2D45',
                     pad = ((5, 0), 2),
-                    font = ('Open Sans', 12, 'bold')
+                    font = ('Open Sans', 12)
                     )
     return label
 
@@ -642,7 +672,7 @@ def textButton(text, background_color, text_color, style=1):
                         enable_events = True,
                         justification = 'r',
                         background_color = background_color,
-                        font = ('Open Sans', 12, 'underline'),
+                        font = ('Open Sans', 12, 'bold underline'),
                         pad = (5, 0),
                         text_color = text_color)
     if style == 2:
@@ -651,6 +681,7 @@ def textButton(text, background_color, text_color, style=1):
                         relief = 'raised',
                         enable_events = True,
                         background_color = background_color,
+                        font = ('Open Sans', 12, 'bold'),
                         text_color = text_color)
     return button
 
@@ -677,12 +708,12 @@ def discounts_layout():
                 alias_list.append(f'{brand[1]} {alias}')
     column = [
         [text_label(
-            _, 30),
+            _, 33),
             sg.Input(
                 key = f'-{i}-',
                 size = (4, 1),
                 enable_events = True,
-                background_color = '#E3FFFA',
+                background_color = '#F7F9FC',
                 justification = 'c',
                 pad = ((15, 15), 2))
             ] for i, _ in enumerate(alias_list)
@@ -690,20 +721,20 @@ def discounts_layout():
     layout = [
         [sg.Text('Product Category\t\t             %',
                  font = ('Open Sans', 14, 'bold'),
-                 text_color = '#009678',
+                 text_color = '#0D70E8',
                  pad = (10, 0),
                  border_width = 0,
                  background_color = '#FFF',
                  justification = 'r'
                  )],
-        [sg.HSeparator(color = '#E3FFFA')],
+        [sg.HSeparator(color = '#F7F9FC')],
         [
         sg.Column(column, scrollable=True, vertical_scroll_only = True, background_color = '#FFF')
          ],
-        [sg.HSeparator(color = '#E3FFFA')],
+        [sg.HSeparator(color = '#F7F9FC')],
         [sg.Text('Overall Discount:',
                  font = ('Open Sans', 12, 'bold'),
-                 text_color = '#009678',
+                 text_color = '#0D70E8',
                  size = (30, 1),
                  pad = (5, 5),
                  border_width = 0,
@@ -713,7 +744,7 @@ def discounts_layout():
                 sg.Input(
                 key = '-OVERALL_DISCOUNT-',
                 size = (4, 1),
-                background_color = '#E3FFFA',
+                background_color = '#F7F9FC',
                 pad = ((15, 15), 5),
                 justification = 'c',
                 enable_events = True)
@@ -724,7 +755,8 @@ def discounts_layout():
                 size = (10, 1),
                 enable_events = True,
                 key = '-CLEAR-',
-                button_color = '#FFF on #FF0000',
+                button_color = '#62074A on #E15878',
+                font = ('Open Sans', 11, 'bold'),
                 pad = ((170, 5), (30, 15))
                 ),
             sg.Button(
@@ -732,7 +764,8 @@ def discounts_layout():
                 size = (10, 1),
                 enable_events = True,
                 key = '-SAVE-',
-                button_color = '#FFF on #009678',
+                button_color = '#003B48 on #30C095',
+                font = ('Open Sans', 11, 'bold'),
                 pad = (5, (30, 15))
                 ),
             ],
@@ -741,7 +774,8 @@ def discounts_layout():
                 size = (10, 1),
                 enable_events = True,
                 key = '-EXIT-',
-                button_color = '#FFF on #F08080',
+                button_color = '#62074A on #E15878',
+                font = ('Open Sans', 11, 'bold'),
                 pad = ((280, 15), (0, 15))
                 )
             ]
@@ -758,13 +792,33 @@ def discount_config():
                 window = create_window('Discount Configuration', layout, PROGRAM_ICON)
                 categories = category_list()
                 discounts = load_discounts()
+                window['-SAVE-'].bind('<Enter>', 'ENTER')
+                window['-SAVE-'].bind('<Leave>', 'EXIT')
+                window['-EXIT-'].bind('<Enter>', 'ENTER')
+                window['-EXIT-'].bind('<Leave>', 'EXIT')
+                window['-CLEAR-'].bind('<Enter>', 'ENTER')
+                window['-CLEAR-'].bind('<Leave>', 'EXIT')
                 for i, _ in enumerate(categories):
                     window[f'-{i}-'].update(value = discounts[i])
             event, values = window.read()
             if event == sg.WIN_CLOSED or event == '-EXIT-':
                 window.close()
                 break
+            if isinstance(event, object):
+                if event == '-SAVE-ENTER':
+                    window['-SAVE-'].update(button_color='#003B48 on #59DFAB')
+                if event == '-SAVE-EXIT':
+                    window['-SAVE-'].update(button_color='#003B48 on #30C095')
+                if event == '-EXIT-ENTER':
+                    window['-EXIT-'].update(button_color='#62074A on #F07B8B')
+                if event == '-EXIT-EXIT':
+                    window['-EXIT-'].update(button_color='#62074A on #E15878')
+                if event == '-CLEAR-ENTER':
+                    window['-CLEAR-'].update(button_color='#62074A on #F07B8B')
+                if event == '-CLEAR-EXIT':
+                    window['-CLEAR-'].update(button_color='#62074A on #E15878')
             if event == '-SAVE-':
+                window['-SAVE-'].update(disabled=True)
                 discounts = []
                 for _ in range(0, len(categories)):
                     discounts.append(values[f'-{_}-'])
@@ -775,6 +829,7 @@ def discount_config():
                 for i, _ in enumerate(categories):
                     window[f'-{i}-'].update(value = discounts[i])
                 sg.popup('Discounts were successfully saved.', title='', font = ('Open Sans', 12))
+                window['-SAVE-'].update(disabled=False)
             if event == '-CLEAR-':
                 for i in range(0, len(categories)):
                     window[f'-{i}-'].update(value = '')
@@ -799,7 +854,8 @@ def table_categories():
     category_names = load_categories()
     category_list = []
     for _ in category_names:
-        category_list.append(category_names[_][0])
+        category_list.append(f'{_.split()[1]} {category_names[_][0]}')
+        #category_list.append(category_names[_][0])
     locations = menu_locations()
     categories = []
     for _ in locations:
@@ -833,12 +889,12 @@ def cell_map_layout():
                   key = '-TABLE-',
                   enable_events = True,
                   size = (len(categories), len(categories)),
-                  background_color = '#FFF',
-                  text_color = '#000',
+                  background_color = '#F7F9FC',
+                  text_color = '#1B2D45',
                   font = ('Open Sans', 12),
-                  selected_row_colors = '#FFF on #009678',
-                  header_background_color = '#009678',
-                  header_text_color = 'yellow',
+                  selected_row_colors = '#003B48 on #C7F9DC',
+                  header_background_color = '',
+                  header_text_color = '',
                   pad = 0,
                   hide_vertical_scroll = True,
                   max_col_width = 25,
@@ -848,7 +904,7 @@ def cell_map_layout():
     menu_mapping_column = [
         [sg.Text('New Category:',
                  font = ('Open Sans', 13, 'bold'),
-                 text_color = '#009678',
+                 text_color = '#0D70E8',
                  pad = (5, 0),
                  border_width = 0,
                  background_color = '#FFF'
@@ -857,17 +913,17 @@ def cell_map_layout():
                  key = '-MMJ_PRODUCT-',
                  enable_events = True,
                  font = ('Open Sans', 12),
-                 text_color = '#000',
-                 background_color = '#E3FFFA',
-                 highlight_background_color = '#009678',
-                 highlight_text_color = '#FFF',
+                 text_color = '#1A2138',
+                 background_color = '#F7F9FC',
+                 highlight_background_color = '#FEF6CB',
+                 highlight_text_color = '#784800',
                  pad = (5, 0),
                  size = (33, 6)
                  )],
         [sg.Text('', background_color = '#FFF')],
         [sg.Text('Page Number:',
                  font = ('Open Sans', 13, 'bold'),
-                 text_color = '#009678',
+                 text_color = '#0D70E8',
                  pad = (5, 0),
                  border_width = 0,
                  background_color = '#FFF',
@@ -876,14 +932,14 @@ def cell_map_layout():
                    key = f'{num}',
                    enable_events = True,
                    size = (3, 1),
-                   button_color = '#FFF on #333',
-                   disabled_button_color = 'yellow on #009678'
+                   button_color = '#003B48 on #C7F9DC',
+                   disabled_button_color = '#003B48 on #30C095'
                    ) for num in range(1, 6)
          ],
         [sg.Text('', background_color = '#FFF')],
         [sg.Text('Menu Position:',
                  font = ('Open Sans', 13, 'bold'),
-                 text_color = '#009678',
+                 text_color = '#0D70E8',
                  pad = (5, 0),
                  border_width = 0,
                  background_color = '#FFF',
@@ -892,30 +948,30 @@ def cell_map_layout():
                    key = f'{letter}',
                    enable_events = True,
                    size = (3, 1),
-                   button_color = '#FFF on #333',
-                   disabled_button_color = 'yellow on #009678'
+                   button_color = '#003B48 on #C7F9DC',
+                   disabled_button_color = '#003B48 on #30C095'
                    ) for letter in range_char('A', 'C')
          ],
         [sg.Button(f'{letter}',
                    key = f'{letter}',
                    enable_events = True,
                    size = (3, 1),
-                   button_color = '#FFF on #333',
-                   disabled_button_color = 'yellow on #009678'
+                   button_color = '#003B48 on #C7F9DC',
+                   disabled_button_color = '#003B48 on #30C095'
                    ) for letter in range_char('D', 'F')
          ],
         [sg.Button(f'{letter}',
                    key = f'{letter}',
                    enable_events = True,
                    size = (3, 1),
-                   button_color = '#FFF on #333',
-                   disabled_button_color = 'yellow on #009678'
+                   button_color = '#003B48 on #C7F9DC',
+                   disabled_button_color = '#003B48 on #30C095'
                    ) for letter in range_char('G', 'I')
          ],
         [sg.Text('', background_color = '#FFF')],
         [sg.Text('Worksheet Cell Mapping:',
                  font = ('Open Sans', 13, 'bold'),
-                 text_color = '#009678',
+                 text_color = '#0D70E8',
                  pad = (5, 5),
                  border_width = 0,
                  background_color = '#FFF'
@@ -927,7 +983,7 @@ def cell_map_layout():
                 justification = 'c',
                 size = (4, 1),
                 enable_events = True,
-                background_color = '#E3FFFA',
+                background_color = '#F7F9FC',
                 pad = ((0, 15), 2))
             ],
         [text_label(
@@ -937,7 +993,7 @@ def cell_map_layout():
             justification = 'c',
             size = (4, 1),
             enable_events = True,
-            background_color = '#E3FFFA',
+            background_color = '#F7F9FC',
             pad = ((0, 15), 2))
         ],
         [text_label(
@@ -947,7 +1003,7 @@ def cell_map_layout():
                 justification = 'c',
                 size = (4, 1),
                 enable_events = True,
-                background_color = '#E3FFFA',
+                background_color = '#F7F9FC',
                 pad = ((0, 15), 2))
             ],
         [text_label(
@@ -957,7 +1013,7 @@ def cell_map_layout():
                 justification = 'c',
                 size = (4, 1),
                 enable_events = True,
-                background_color = '#E3FFFA',
+                background_color = '#F7F9FC',
                 pad = ((0, 15), 2))
             ],
         [text_label(
@@ -967,7 +1023,7 @@ def cell_map_layout():
                 justification = 'c',
                 size = (4, 1),
                 enable_events = True,
-                background_color = '#E3FFFA',
+                background_color = '#F7F9FC',
                 pad = ((0, 15), 2))
             ],
         [text_label(
@@ -977,7 +1033,7 @@ def cell_map_layout():
                 justification = 'c',
                 size = (4, 1),
                 enable_events = True,
-                background_color = '#E3FFFA',
+                background_color = '#F7F9FC',
                 pad = ((0, 15), 2))
             ],
         [text_label(
@@ -987,7 +1043,7 @@ def cell_map_layout():
                 justification = 'c',
                 size = (4, 1),
                 enable_events = True,
-                background_color = '#E3FFFA',
+                background_color = '#F7F9FC',
                 pad = ((0, 15), 2))
             ],
         [text_label(
@@ -997,7 +1053,7 @@ def cell_map_layout():
                 justification = 'c',
                 size = (4, 1),
                 enable_events = True,
-                background_color = '#E3FFFA',
+                background_color = '#F7F9FC',
                 pad = ((0, 15), 2))
             ],
         [sg.Button(
@@ -1005,7 +1061,8 @@ def cell_map_layout():
                 size = (10, 1),
                 enable_events = True,
                 key = '-SAVE-',
-                button_color = '#FFF on #009678',
+                button_color = '#003B48 on #30C095',
+                font = ('Open Sans', 11, 'bold'),
                 pad = ((220, 5), (40, 15))
                 )
             ],
@@ -1014,7 +1071,8 @@ def cell_map_layout():
             size = (10, 1),
             enable_events = True,
             key = '-EXIT-',
-            button_color = '#FFF on #F08080',
+            button_color = '#62074A on #E15878',
+            font = ('Open Sans', 11, 'bold'),
             pad = ((220, 5), (0, 15))
             )
             ]
@@ -1024,7 +1082,7 @@ def cell_map_layout():
                  enable_events = True,
                  key = '-TITLE_L-',
                  background_color = '#FFF',
-                 text_color = '#009678',
+                 text_color = '#0D70E8',
                  justification = 'left',
                  pad = ((0, 5), (5, 0)),
                  font = ('Open Sans', 14, 'bold')
@@ -1033,9 +1091,9 @@ def cell_map_layout():
                    size = (16, 1),
                    enable_events = True,
                    key = '-UNASSIGN_MENU-',
-                   button_color = '#FFF on #F08080',
-                   font = ('Open Sans', 10),
-                   pad = (5, (10, 20))
+                   button_color = '#62074A on #E15878',
+                   font = ('Open Sans', 11, 'bold'),
+                   pad = ((0, 5), (10, 20))
         )]
     ]
     title_column_r = [
@@ -1043,21 +1101,21 @@ def cell_map_layout():
                  enable_events = True,
                  key = '-TITLE_R-',
                  background_color = '#FFF',
-                 text_color = '#009678',
+                 text_color = '#0D70E8',
                  justification = 'left',
                  pad = (5, (5, 0)),
                  font = ('Open Sans', 14, 'bold')
                  )],
         [textButton('edit name',
                  background_color = '#FFF',
-                 text_color = '#009678',
+                 text_color = '#30C095',
                  style = 1
                  ),
                  sg.Input(size = (33, 1),
                   enable_events = True,
                   key = '-CATEGORY_ALIAS-',
                   pad = ((5, 0), 0),
-                  background_color = '#E3FFFA',
+                  background_color = '#F7F9FC',
                   disabled_readonly_background_color = '#FFF',
                   disabled = True,
                   visible = False
@@ -1102,6 +1160,12 @@ def cell_map_config():
                 window[('-B-', 'edit name')].update(visible = False)
                 window['-UNASSIGN_MENU-'].update(visible = False)
                 bind_button(window, 'edit name')
+                window['-SAVE-'].bind('<Enter>', 'ENTER')
+                window['-SAVE-'].bind('<Leave>', 'EXIT')
+                window['-EXIT-'].bind('<Enter>', 'ENTER')
+                window['-EXIT-'].bind('<Leave>', 'EXIT')
+                window['-UNASSIGN_MENU-'].bind('<Enter>', 'ENTER')
+                window['-UNASSIGN_MENU-'].bind('<Leave>', 'EXIT')
                 locations = menu_locations()
                 categories = []
                 alias = ''
@@ -1137,12 +1201,12 @@ def cell_map_config():
                 window['-TITLE_L-'].update(f'Page: {page}  /  Menu: {menu}')
                 window['-TITLE_R-'].update(str(alias))
                 if prev_page != '' and prev_menu != '':
-                    window[str(prev_page)].update(disabled = False, button_color = '#FFF on #333')
-                    window[str(prev_menu)].update(disabled = False, button_color = '#FFF on #333')
+                    window[str(prev_page)].update(disabled = False, button_color = '#003B48 on #C7F9DC')
+                    window[str(prev_menu)].update(disabled = False, button_color = '#003B48 on #C7F9DC')
                 prev_page = page
                 prev_menu = menu
-                window[str(page)].update(disabled = True, button_color = 'yellow on #009678')
-                window[str(menu)].update(disabled = True, button_color = 'yellow on #009678')
+                window[str(page)].update(disabled = True, button_color = '#003B48 on #59DFAB')
+                window[str(menu)].update(disabled = True, button_color = '#003B48 on #59DFAB')
                 window['-CATEGORY_ALIAS-'].update(disabled = True, visible = False)
                 edit_name = False
             if alias == '':
@@ -1175,12 +1239,12 @@ def cell_map_config():
                 window['-TITLE_L-'].update(f'Page: {page}  /  Menu: {menu}')
                 window['-TITLE_R-'].update(str(alias))
                 if prev_page != '' and prev_menu != '':
-                    window[str(prev_page)].update(disabled = False, button_color = '#FFF on #333')
-                    window[str(prev_menu)].update(disabled = False, button_color = '#FFF on #333')
+                    window[str(prev_page)].update(disabled = False, button_color = '#003B48 on #C7F9DC')
+                    window[str(prev_menu)].update(disabled = False, button_color = '#003B48 on #C7F9DC')
                 prev_page = page
                 prev_menu = menu
-                window[str(page)].update(disabled = True, button_color = 'yellow on #009678')
-                window[str(menu)].update(disabled = True, button_color = 'yellow on #009678')
+                window[str(page)].update(disabled = True, button_color = '#003B48 on #59DFAB')
+                window[str(menu)].update(disabled = True, button_color = '#003B48 on #59DFAB')
                 window['-CATEGORY_ALIAS-'].update(disabled = True)
                 edit_name = False
             if event in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
@@ -1200,23 +1264,23 @@ def cell_map_config():
                 window['-TITLE_L-'].update(f'Page: {page}  /  Menu: {menu}')
                 window['-TITLE_R-'].update(str(alias))
                 if prev_page != '' and prev_menu != '':
-                    window[str(prev_page)].update(disabled = False, button_color = '#FFF on #333')
-                    window[str(prev_menu)].update(disabled = False, button_color = '#FFF on #333')
+                    window[str(prev_page)].update(disabled = False, button_color = '#003B48 on #C7F9DC')
+                    window[str(prev_menu)].update(disabled = False, button_color = '#003B48 on #C7F9DC')
                 prev_page = page
                 prev_menu = menu
-                window[str(page)].update(disabled = True, button_color = 'yellow on #009678')
-                window[str(menu)].update(disabled = True, button_color = 'yellow on #009678')
+                window[str(page)].update(disabled = True, button_color = '#003B48 on #59DFAB')
+                window[str(menu)].update(disabled = True, button_color = '#003B48 on #59DFAB')
                 window['-CATEGORY_ALIAS-'].update(disabled = True)
                 edit_name = False
             if isinstance(event, tuple):
                 if event[1] in ('ENTER', 'EXIT'):
                     button_key = event[0]
                     if event[1] in 'ENTER':
-                        window[button_key].update(text_color='#00D84A',
+                        window[button_key].update(text_color='#59DFAB',
                                                 background_color='#FFF'
                                                 )
                     if event[1] in 'EXIT':
-                        window[button_key].update(text_color='#009678',
+                        window[button_key].update(text_color='#30C095',
                                                 background_color='#FFF'
                                                 )
                 else:
@@ -1226,11 +1290,25 @@ def cell_map_config():
                     else:
                         window['-CATEGORY_ALIAS-'].update(disabled = True, visible = False)
                         edit_name = False
+            if isinstance(event, object):
+                if event == '-SAVE-ENTER':
+                    window['-SAVE-'].update(button_color='#003B48 on #59DFAB')
+                if event == '-SAVE-EXIT':
+                    window['-SAVE-'].update(button_color='#003B48 on #30C095')
+                if event == '-EXIT-ENTER':
+                    window['-EXIT-'].update(button_color='#62074A on #F07B8B')
+                if event == '-EXIT-EXIT':
+                    window['-EXIT-'].update(button_color='#62074A on #E15878')
+                if event == '-UNASSIGN_MENU-ENTER':
+                    window['-UNASSIGN_MENU-'].update(button_color='#62074A on #F07B8B')
+                if event == '-UNASSIGN_MENU-EXIT':
+                    window['-UNASSIGN_MENU-'].update(button_color='#62074A on #E15878')
             if event == '-SAVE-':
+                window['-SAVE-'].update(disabled=True)
                 mmj_product = mapping['MMJ Product']
                 if values['-MMJ_PRODUCT-']:
                     if values['-MMJ_PRODUCT-'][0] != '':
-                        mmj_product = values['-MMJ_PRODUCT-'][0]
+                        mmj_product = values['-MMJ_PRODUCT-'][0][3:]
                         mmj_product = find_category_name(mmj_product)
                 mapping_values = [mmj_product,
                                   values['-UNIT_PRICE-'],
@@ -1243,18 +1321,23 @@ def cell_map_config():
                                   values['-PRODUCT_COL-']
                                   ]
                 save_mapping(page, menu, mapping, mapping_values)
+                window['-SAVE-'].update(disabled=False)
                 try:
                     save_alias(category, str(values['-CATEGORY_ALIAS-']))
                     sg.popup('Mappings were successfully saved.',
                              title='',
                              font = ('Open Sans', 12))
+                    window.close()
+                    window = None
                 except KeyError:
                     pass
             if event == '-UNASSIGN_MENU-':
+                window['-UNASSIGN_MENU-'].update(disabled=True)
                 unassign_menu(page, menu)
                 sg.popup(f'The category on...\n\nPage: {page}\nMenu: {menu}\n\nWas successfully unassigned.',
                          title='',
                          font = ('Open Sans', 12))
+                window['-UNASSIGN_MENU-'].update(disabled=False)
         except ValueError as v_error:
             sg.popup_error(
                 f'The value {v_error} was out of bounds.',
@@ -1280,43 +1363,76 @@ def main_layout():
         [sg.Image(rf'{PROGRAM_LOGO}', background_color = '#FFF', pad = (5, (5, 0)))],
         [sg.Text('', background_color = '#FFF')],
         [sg.Text('Choose an exported package file:',
-                 font = ('Open Sans', 14, 'bold'),
-                 text_color = '#009678',
+                 font = ('Open Sans', 12, 'bold'),
+                 text_color = '#0D70E8',
                  pad = (5, (15, 0)),
                  border_width = 0,
                  background_color = '#FFF'
                  )],
-        [sg.Text('', background_color = '#E3FFFA', justification = 'r', size = (35, 1)),
+        [sg.Text('', background_color = '#F7F9FC', key = '-FILE_BROWSER-', pad = (0, 0), justification = 'r', size = (36, 1)),
          sg.FileBrowse(key='-EXPORTED_PACKAGES-',
                        enable_events = True,
                        pad = (10, 0),
-                       button_color = '#000 on #E3FFFA'
+                       button_color = '#003B48 on #30C095',
+                       font = ('Open Sans', 11, 'bold'),
+                       file_types = (('current_packages', '.xlsx'),)
                        )],
-        [sg.Text('', background_color = '#FFF')],
+                [sg.ProgressBar(100,
+                        orientation = 'h',
+                        size = (30, 10),
+                        key = '-P_BAR-',
+                        border_width = 0,
+                        pad = (0, 0),
+                        bar_color = '#CDECFD on #FFF'
+        )],
+        [sg.Text('',
+                 background_color = '#FFF',
+                 enable_events = True,
+                 key = '-MENU_STATUS-',
+                 pad = (0, 0),
+                 size = (36, 1),
+                 justification = 'r'
+                 )],
         [sg.Button('Create Menu',
                    size = (12, 1),
                    enable_events = True,
-                   button_color = '#FFF on #009678',
+                   button_color = '#003B48 on #30C095',
+                   font = ('Open Sans', 11, 'bold'),
                    key = '-CREATE_MENU-',
-                   pad = ((290, 5), 15)
-                   )]
+                   pad = ((335, 5), 15)
+                   )],
+        [sg.Text(f'v{VERSION}',
+                 size = (VERSION_WIDTH, 1),
+                 justification = 'r',
+                 key = '-VERSION_INFO-',
+                 font = ('Open Sans', 10, VERSION_FONT_WEIGHT),
+                 background_color = '#FFF',
+                 text_color = VERSION_COLOR)]
         ]
     return layout
 
 def main():
     '''Handle events for the main window'''
     window = None
+    #new_version = update_check()
     while True:
         try:
             if window is None:
+                new_version = update_check()
                 layout = main_layout()
                 window = create_window('Dispensary Menu Creator', layout, PROGRAM_ICON, '#FFF')
-                event, values = window.read()
+                window['-CREATE_MENU-'].bind('<Enter>', 'ENTER')
+                window['-CREATE_MENU-'].bind('<Leave>', 'EXIT')
+                window['-EXPORTED_PACKAGES-'].bind('<Enter>', 'ENTER')
+                window['-EXPORTED_PACKAGES-'].bind('<Leave>', 'EXIT')
+                window['-FILE_BROWSER-'].Widget.configure(highlightcolor='#000', highlightthickness=2)
+            event, values = window.read()
             if event == sg.WIN_CLOSED or event == 'Exit':
                 break
+            if new_version is True:
+                window['-VERSION_INFO-'].update(f'Update Available \t v{VERSION}')
             # Checks for updates, then asks the user if they want to download it
             if event == 'Check for Updates':
-                new_version = update_check()
                 if new_version is True:
                     answer = sg.popup_yes_no(
                         UPDATE_MSG_YES,
@@ -1333,8 +1449,6 @@ def main():
                         keep_on_top = True,
                         font = ('Open Sans', 12)
                     )
-                window.close()
-                window = None
             # Load the 'About' message
             if event == 'About':
                 new_version = update_check()
@@ -1352,31 +1466,31 @@ def main():
                         keep_on_top = True,
                         font = ('Open Sans', 12)
                         )
-                window.close()
-                window = None
             # Open a web browser to the GitHub page
             if event == 'GitHub Page':
                 webbrowser.open(GITHUB_LINK)
-                window.close()
-                window = None
             if event == '-CREATE_MENU-':
+                window['-MENU_STATUS-'].update('')
+                window['-CREATE_MENU-'].update(disabled=True)
                 exported_packages = pathlib.PurePath(values['-EXPORTED_PACKAGES-'])
                 current_packages = pd.read_excel(exported_packages, sheet_name = 'All Packages')
                 full_menu = build_menu(current_packages)
                 np.sort(full_menu['category'].unique())
-                save_all(full_menu)
-                window.close()
-                window = None
-                save_location = pathlib.PurePath(MAIN_DIRECTORY, '_schedules')
-                sg.popup(f'The menu was successfully saved to: {save_location}', title='', font = ('Open Sans', 12))
+                save_all(full_menu, window)
+                window['-CREATE_MENU-'].update(disabled=False)
             if event == 'Menu Mapping Configuration':
-                window.close()
                 cell_map_config()
-                window = None
             if event == 'Discounted Products':
-                window.close()
                 discount_config()
-                window = None
+            if isinstance(event, object):
+                if event == '-CREATE_MENU-ENTER':
+                    window['-CREATE_MENU-'].update(button_color='#003B48 on #59DFAB')
+                if event == '-CREATE_MENU-EXIT':
+                    window['-CREATE_MENU-'].update(button_color='#003B48 on #30C095')
+                if event == '-EXPORTED_PACKAGES-ENTER':
+                    window['-EXPORTED_PACKAGES-'].update(button_color='#003B48 on #59DFAB')
+                if event == '-EXPORTED_PACKAGES-EXIT':
+                    window['-EXPORTED_PACKAGES-'].update(button_color='#003B48 on #30C095')
         except ValueError as v_error:
             sg.popup_error(
                 f'The value {v_error} was out of bounds.',
