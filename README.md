@@ -1,12 +1,16 @@
 # Dispensary Menu Creator
-**Version:** 0.1.2-beta
+**Version:** 0.1.4-beta
 
 **Download Link:** https://drive.google.com/u/0/uc?id=1l6ef6J4XSu-b70IfCGji8KMB_HLj3np5&export=download
 
 # Recent Update:
- * Sale prices are now displayed in red, to match the sale message color.
- * Out of stock categories will now be displayed, instead of leaving a blank space where it would usually be.
- * Brands have been added to the Cell Mapping and Discount configuration lists, to make it easier to differentiate between product categories that share the same alias.
+
+* The current program version is now listed in the bottom right corner. The color will change, and a message will appear if there is a newer version available.
+* A progress bar was added to display the progress of the menu creation process.
+* A minor adjustment was made to account for a categorical issue involving some products that do not have a "strain".
+* Numerous cosmetic changes were made.
+
+We don't talk about v0.1.3-beta.
 
 
 # About:
