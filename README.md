@@ -1,16 +1,13 @@
 # Dispensary Menu Creator
-**Version:** 0.1.4-beta
+**Version:** 0.1.5-beta
 
 **Download Link:** https://drive.google.com/u/0/uc?id=1l6ef6J4XSu-b70IfCGji8KMB_HLj3np5&export=download
 
 # Recent Update:
 
-* The current program version is now listed in the bottom right corner. The color will change, and a message will appear if there is a newer version available.
-* A progress bar was added to display the progress of the menu creation process.
-* A minor adjustment was made to account for a categorical issue involving some products that do not have a "strain".
-* Numerous cosmetic changes were made.
-
-We don't talk about v0.1.3-beta.
+* The number of unassigned categories is now listed in the main window of the program.
+* The number of unassigned menu locations are also now listed in the main window, including the page number and menu letter of the unassigned locations.
+* Unassigned menu locations are now in yellow when navigating the "Cell Mapping Configuration" window.
 
 
 # About:
@@ -27,10 +24,13 @@ The author takes no responsibility for any issues that may occur.
 Requirements:
 
 - Python 3.9.13
-  * Requests 2.28.2
-  * BeautifulSoup4 4.11.1
-  * pandas 1.5.2
-  * PySimpleGUIQt 0.35.0
+  * Requests 2.27.1
+  * BeautifulSoup4 4.10.0
+  * pandas 1.4.2
+  * PySimpleGUI 4.55.1
+  * openpyxl 3.0.10
+  * requests 2.27.1
+  * numpy 1.22.4
 
 # Legal:
 Dispensary Menu Creator is licensed under the GNU General Public License Version 3.0. The full text of this license is available in the LICENSE file.
