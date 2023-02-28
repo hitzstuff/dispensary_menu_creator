@@ -1,5 +1,5 @@
 # Dispensary Menu Creator
-**Version:** 0.1.5-beta
+**Version:** 0.1.6-beta
 
 **Download Link:** https://drive.google.com/u/0/uc?id=1l6ef6J4XSu-b70IfCGji8KMB_HLj3np5&export=download
 
@@ -7,7 +7,10 @@
 
 * The number of unassigned categories is now listed in the main window of the program.
 * The number of unassigned menu locations are also now listed in the main window, including the page number and menu letter of the unassigned locations.
-* Unassigned menu locations are now in yellow when navigating the "Cell Mapping Configuration" window.
+* Unassigned menu locations are now in grey when navigating the "Cell Mapping Configuration" window.
+* Added two new buttons to the "Cell Mapping Configuration" window: Page Swap and Menu Swap.  One swaps an entire page of menus, and the other swaps the locations of two individual menus.
+* Added a 6th page, to account for double-sided printing.
+* Cosmetic improvements.
 
 
 # About:
