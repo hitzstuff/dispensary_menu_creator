@@ -1,16 +1,14 @@
 # Dispensary Menu Creator
-**Version:** 0.1.6-beta
+**Version:** 1.0.0
 
 **Download Link:** https://drive.google.com/u/0/uc?id=1l6ef6J4XSu-b70IfCGji8KMB_HLj3np5&export=download
 
 # Recent Update:
 
-* The number of unassigned categories is now listed in the main window of the program.
-* The number of unassigned menu locations are also now listed in the main window, including the page number and menu letter of the unassigned locations.
-* Unassigned menu locations are now in grey when navigating the "Cell Mapping Configuration" window.
-* Added two new buttons to the "Cell Mapping Configuration" window: Page Swap and Menu Swap.  One swaps an entire page of menus, and the other swaps the locations of two individual menus.
-* Added a 6th page, to account for double-sided printing.
-* Cosmetic improvements.
+* First non-beta release!
+* NUMEROUS cosmetic improvements
+* Product categories can be viewed alongside their aliases, and can now also be deleted (Product Categories menu).
+* Code optimization
 
 
 # About:
@@ -20,7 +18,7 @@ This utility is used to configure a printable menu for a cannabis dispensary, an
 
 Future releases and source code will be made available on this GitHub project page.
 
-This program is Beta, and has no warranty.  It may not function as intended.
+This program is open source, and has no warranty.  It may not function as intended.
 The author takes no responsibility for any issues that may occur.
 
 # Install Instructions:
