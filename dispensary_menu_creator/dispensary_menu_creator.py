@@ -46,8 +46,13 @@ BUTTON_COLOR_HOVER = '#003B48 on #59DFAB'
 EXIT_COLOR = '#62074A on #E15878'
 EXIT_COLOR_HOVER = '#62074A on #F07B8B'
 # Dimensions
-WINDOW_HEIGHT = 450
-WINDOW_HEIGHT_UPDATE = 500
+width, height = sg.Window.get_screen_size()
+if height == 1440:
+    WINDOW_HEIGHT = 450
+    WINDOW_HEIGHT_UPDATE = 500
+if height == 1080:
+    WINDOW_HEIGHT = 400
+    WINDOW_HEIGHT_UPDATE = 450
 # Version control/update notification
 request = requests.get(GITHUB_LINK, timeout=5)
 parse = bs4.BeautifulSoup(request.text, 'html.parser')
@@ -164,25 +169,25 @@ def create_window(layout, background_color='#FFF'):
 
 def find_alias(category):
     '''Given a product category, returns its alias'''
-    categories = load_categories()
+    category_dict = load_categories()
     try:
-        alias = categories[category][0]
+        alias = category_dict[category][0]
     except KeyError:
         alias = category
     return alias
 
-def save_categories(categories):
+def save_categories(category_dict):
     '''Saves all category information to the categories.cfg file'''
     file = CATEGORIES_FILE
     with open(file, 'w', encoding='UTF-8') as file:
-        json_dump(categories, file)
+        json_dump(category_dict, file)
     return None
 
 def save_alias(category, alias):
     '''Given a category name and its alias, saves them to categories.cfg'''
-    categories = load_categories()
-    categories[category][0] = alias
-    save_categories(categories)
+    category_dict = load_categories()
+    category_dict[category][0] = alias
+    save_categories(category_dict)
 
 def category_list():
     '''Collects category names from the worksheet cell mapping files'''
@@ -202,36 +207,35 @@ def load_categories():
     try:
         file = CATEGORIES_FILE
         with open(file, 'r', encoding='UTF-8') as file:
-            categories = json_load(file)
+            category_dict = json_load(file)
     except FileNotFoundError as error:
         sg.popup(f'exception {error}\n\nNo categories file found.',
                  title='',
                  font = ('Open Sans', 13))
-    return categories
+    return category_dict
 
 def load_discounts():
     '''Loads the discount values from the categories.cfg file'''
-    categories = load_categories()
-    cat_list = category_list()
+    category_dict = load_categories()
     discounts = []
-    for _ in cat_list:
-        discounts.append(categories[_][1])
+    for _ in category_list():
+        discounts.append(category_dict[_][1])
     return discounts
 
 def save_discounts(discount_values, overall_discount):
     '''Saves the discount values to their respective categories in the categories.cfg file'''
-    categories = load_categories()
+    category_dict = load_categories()
     cat_list = category_list()
     for i, _ in enumerate(cat_list):
         if _ != '':
             if discount_values[i] == '':
-                categories[_][1] = overall_discount
+                category_dict[_][1] = overall_discount
             else:
-                categories[_][1] = discount_values[i]
+                category_dict[_][1] = discount_values[i]
     file = CATEGORIES_FILE
     # Opens the discount file and overwrites it with the new value
     with open(file, 'w', encoding='UTF-8') as file:
-        json_dump(categories, file)
+        json_dump(category_dict, file)
     return None
 
 def text_label(text, width, bold=None, style=1):
@@ -835,13 +839,13 @@ def save_menu(workbook,
     if len(menu) >= 0:
         try:
             discount_cell = f'{prod_col}{first_row - 1}'
+            unit_price = float(list(menu['unit_price'])[0])
             if sale_percent == 0:
-                unit_price = float(list(menu['unit_price'])[0])
                 discount_msg = ''
                 sheet[discount_cell].value = discount_msg
             if sale_percent != 0:
-                unit_price = float(list(menu['unit_price'])[0]) * (1 - (sale_percent / 100))
-                discount_msg = f'SALE: {sale_percent}% OFF!'
+                sale_price = float(list(menu['unit_price'])[0]) * (1 - (sale_percent / 100))
+                discount_msg = f'${sale_price:.2f} - {sale_percent}% OFF!'
                 sheet[discount_cell].value = discount_msg
             product_brand = list(menu['brand'])[0]
         except ValueError:
@@ -857,20 +861,6 @@ def save_menu(workbook,
         save_product_thc(sheet, menu, thc_col, first_row, last_row)
         save_product(sheet, menu, prod_col, first_row, last_row)
         sheet[unit_price_pos].value = unit_price
-        if sale_percent != 0 or sale_percent != '':
-            sheet[unit_price_pos].font = openpyxl.styles.Font(
-                'Bahnschrift',
-                size=19,
-                color='FF0000',
-                b=True
-                )
-        if sale_percent == 0 or sale_percent == '':
-            sheet[unit_price_pos].font = openpyxl.styles.Font(
-                'Bahnschrift',
-                size=19,
-                color='000000',
-                b=True
-                )
         sheet[category_pos].value = alias
         sheet[brand_pos].value = product_brand
         # Save the new values to the workbook
@@ -1129,22 +1119,7 @@ def cell_map_layout():
                  justification = 'left',
                  pad = (5, (5, 0)),
                  font = ('Open Sans', 13, 'bold')
-                 )],
-        [text_button('edit name',
-                 background_color = '#FFF',
-                 text_color = '#30C095',
-                 style = 1
-                 ),
-                 sg.Input(size = (32, 1),
-                  enable_events = True,
-                  key = '-CATEGORY_ALIAS-',
-                  pad = ((5, 0), 0),
-                  background_color = '#F7F9FC',
-                  disabled_readonly_background_color = '#FFF',
-                  disabled = True,
-                  visible = False
-                  )
-                 ]
+                 )]
     ]
     layout = [
         [sg.Column(title_column_l,
@@ -1166,7 +1141,7 @@ def cell_map_layout():
                     button_color = '#003B48 on #30C095',
                     font = ('Open Sans', 11, 'bold'),
                     key = '-PAGE_SWAP-',
-                    pad = ((5, 5), 15)
+                    pad = ((5, 5), (0, 15))
                     ),
             sg.Button('Menu Swap',
                     size = (10, 1),
@@ -1174,7 +1149,7 @@ def cell_map_layout():
                     button_color = '#003B48 on #30C095',
                     font = ('Open Sans', 11, 'bold'),
                     key = '-MENU_SWAP-',
-                    pad = ((5, 5), 15)
+                    pad = ((5, 5), (0, 15))
                     ),
             sg.Button('Unassign Menu',
                     size = (14, 1),
@@ -1182,14 +1157,14 @@ def cell_map_layout():
                     key = '-UNASSIGN_MENU-',
                     button_color = '#62074A on #E15878',
                     font = ('Open Sans', 11, 'bold'),
-                    pad = ((162, 0), 15)
+                    pad = ((162, 0), (0, 15))
             )
         ],
         [sg.Column(menu_category_column,
-                   pad = ((0, 10), 10),
+                   pad = ((0, 10), (10, 0)),
                    vertical_alignment = 'top'),
          sg.Column(menu_mapping_column,
-                   pad = (10, 10),
+                   pad = (10, (10, 0)),
                    vertical_alignment = 'top',
                    background_color = '#FFF'),
          ],
@@ -1233,11 +1208,8 @@ def cell_map_config():
             if window is None:
                 prev_page = ''
                 prev_menu = ''
-                edit_name = False
                 window = cell_map_layout()
-                window[('-B-', 'edit name')].update(visible = False)
                 window['-UNASSIGN_MENU-'].update(visible = False)
-                bind_button(window, 'edit name')
                 button_list = [
                     '-SAVE-',
                     '-MENU_SWAP-',
@@ -1305,7 +1277,6 @@ def cell_map_config():
                 mapping = load_mapping(page, menu)
                 category = mapping['MMJ Product']
                 alias = find_alias(category)
-                window['-CATEGORY_ALIAS-'].update(str(alias))
                 window['-UNIT_PRICE-'].update(str(mapping['Unit Price']))
                 window['-BRAND-'].update(str(mapping['Brand']))
                 window['-CATEGORY-'].update(str(mapping['Product Category']))
@@ -1327,24 +1298,10 @@ def cell_map_config():
                                          button_color = '#003B48 on #59DFAB')
                 window[str(menu)].update(disabled = True,
                                          button_color = '#003B48 on #59DFAB')
-                window['-CATEGORY_ALIAS-'].update(disabled = True,
-                                                  visible = False)
-                edit_name = False
             if alias == '':
-                window[('-B-', 'edit name')].update(visible = False)
                 window['-UNASSIGN_MENU-'].update(visible = False)
             if alias != '':
-                window[('-B-', 'edit name')].update(visible = True)
                 window['-UNASSIGN_MENU-'].update(visible = True)
-            if event == '-EDIT_NAME-':
-                if edit_name is False:
-                    window['-CATEGORY_ALIAS-'].update(disabled = False,
-                                                      visible = True)
-                    edit_name = True
-                else:
-                    window['-CATEGORY_ALIAS-'].update(disabled = True,
-                                                      visible = False)
-                    edit_name = False
             if event in ['1', '2', '3', '4', '5', '6']:
                 page = int(event)
                 try:
@@ -1357,7 +1314,6 @@ def cell_map_config():
                 mapping = load_mapping(page, menu)
                 category = mapping['MMJ Product']
                 alias = find_alias(category)
-                window['-CATEGORY_ALIAS-'].update(str(alias))
                 window['-UNIT_PRICE-'].update(str(mapping['Unit Price']))
                 window['-BRAND-'].update(str(mapping['Brand']))
                 window['-CATEGORY-'].update(str(mapping['Product Category']))
@@ -1377,14 +1333,12 @@ def cell_map_config():
                 prev_menu = menu
                 window[str(page)].update(disabled = True, button_color = '#003B48 on #59DFAB')
                 window[str(menu)].update(disabled = True, button_color = '#003B48 on #59DFAB')
-                window['-CATEGORY_ALIAS-'].update(disabled = True)
                 edit_name = False
             if event in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
                 menu = event
                 mapping = load_mapping(page, menu)
                 category = mapping['MMJ Product']
                 alias = find_alias(category)
-                window['-CATEGORY_ALIAS-'].update(str(alias))
                 window['-UNIT_PRICE-'].update(str(mapping['Unit Price']))
                 window['-BRAND-'].update(str(mapping['Brand']))
                 window['-CATEGORY-'].update(str(mapping['Product Category']))
@@ -1410,28 +1364,6 @@ def cell_map_config():
                                          button_color = '#003B48 on #59DFAB')
                 window[str(menu)].update(disabled = True,
                                          button_color = '#003B48 on #59DFAB')
-                window['-CATEGORY_ALIAS-'].update(disabled = True)
-                edit_name = False
-            if isinstance(event, tuple):
-                if event[1] in ('ENTER', 'EXIT'):
-                    button_key = event[0]
-                    if event[1] in 'ENTER':
-                        window[button_key].update(text_color='#59DFAB',
-                                                background_color='#FFF'
-                                                )
-                        window.set_cursor('hand2')
-                    if event[1] in 'EXIT':
-                        window[button_key].update(text_color='#30C095',
-                                                background_color='#FFF'
-                                                )
-                        window.set_cursor('arrow')
-                else:
-                    if edit_name is False:
-                        window['-CATEGORY_ALIAS-'].update(disabled = False, visible = True)
-                        edit_name = True
-                    else:
-                        window['-CATEGORY_ALIAS-'].update(disabled = True, visible = False)
-                        edit_name = False
             if isinstance(event, object):
                 for _ in button_list:
                     if event == f'{_}ENTER':
@@ -1487,10 +1419,6 @@ def cell_map_config():
                 save_mapping(page, menu, mapping, mapping_values)
                 window['-SAVE-'].update(disabled=False)
                 window.set_cursor('arrow')
-                try:
-                    save_alias(category, str(values['-CATEGORY_ALIAS-']))
-                except KeyError:
-                    pass
                 window.close()
                 window = None
             if event == '-UNASSIGN_MENU-':
@@ -1892,7 +1820,7 @@ def categories_window():
         alias_list.append(alias)
     column = [
         [sg.Text(
-            'Delete',
+            'delete',
             key = f'-{i}-',
             size = (6, 1),
             enable_events = True,
@@ -1902,8 +1830,26 @@ def categories_window():
             pad = (0, 2)),
         text_label(
             _, 33, style=2),
-        text_label(
-            alias_list[i], 33, style=2)
+        sg.Text(
+            'rename',
+            key = f'-{i}_RENAME-',
+            size = (7, 1),
+            enable_events = True,
+            font = ('Open Sans', 11, 'bold'),
+            background_color = '#FFF',
+            text_color = '#F07B8B',
+            pad = ((25, 2), 2)),
+        sg.Input(
+                alias_list[i],
+                key = f'-{i}_ALIAS-',
+                size = (33, 1),
+                enable_events = True,
+                background_color = COL_1_BACKGROUND_COLOR,
+                disabled_readonly_background_color = COL_2_BACKGROUND_COLOR,
+                justification = 'l',
+                border_width = 0,
+                disabled = True,
+                pad = (5, 2))
             ] for i, _ in enumerate(categories_list)
          ]
     layout = [
@@ -1914,24 +1860,24 @@ def categories_window():
         sg.Text('Product Category',
                  font = ('Open Sans', 13, 'bold'),
                  text_color = '#0D70E8',
-                 pad = (10, 0),
+                 pad = (5, 0),
                  border_width = 0,
                  background_color = '#FFF',
                  ),
         sg.Text('Category Alias',
                  font = ('Open Sans', 13, 'bold'),
                  text_color = '#0D70E8',
-                 pad = ((147, 10), 0),
+                 pad = ((240, 10), 0),
                  border_width = 0,
                  background_color = '#FFF',
-                 ),         
+                 ),
             ],
         [sg.HSeparator(color = '#F7F9FC')],
         [
         sg.Column(column, scrollable=True,
                   vertical_scroll_only = True,
                   background_color = '#FFF',
-                  size = (680, 750))
+                  size = (770, 750))
             ],
         [sg.HSeparator(color = '#F7F9FC')],
         [sg.Button(
@@ -1941,7 +1887,7 @@ def categories_window():
                 key = '-EXIT-',
                 button_color = EXIT_COLOR,
                 font = ('Open Sans', 11, 'bold'),
-                pad = ((620, 5), (15, 10))
+                pad = ((710, 5), (15, 10))
                 )
             ]
         ]
@@ -1967,14 +1913,20 @@ def categories():
                 categories_list = list(categories_dict)
                 categories_list.sort()
                 window = categories_window()
-                text_list = [
-                ]
+                text_list = []
+                text_list_2 = []
+                disabled = True
                 for i, _ in enumerate(categories_list):
                     text_list.append(f'-{i}-')
+                    text_list_2.append(f'-{i}_RENAME-')
                 button_list = [
                     '-EXIT-'
                 ]
                 for _ in text_list:
+                    window[f'{_}'].bind('<Enter>', 'ENTER')
+                    window[f'{_}'].bind('<Leave>', 'EXIT')
+                    window[f'{_}'].bind('<Button-1>', 'CLICK')
+                for _ in text_list_2:
                     window[f'{_}'].bind('<Enter>', 'ENTER')
                     window[f'{_}'].bind('<Leave>', 'EXIT')
                     window[f'{_}'].bind('<Button-1>', 'CLICK')
@@ -2010,8 +1962,29 @@ def categories():
                         save_categories(categories_dict)
                         window.close()
                         window = None
-            if event == '-EXIT-':
-                break
+                for _ in text_list_2:
+                    if event == f'{_}ENTER':
+                        window[f'{_}'].update(
+                            text_color = '#FF0000')
+                        window.set_cursor('hand2')
+                    if event == f'{_}EXIT':
+                        window[f'{_}'].update(
+                            text_color = '#F07B8B')
+                        window.set_cursor('arrow')
+                    if event == f'{_}CLICK':
+                        stop = event.find('_')
+                        i = event[1:stop]
+                        value = f'-{i}_ALIAS-'
+                        if disabled is True:
+                            window[value].update(
+                                disabled = False)
+                            disabled = False
+                        elif disabled is False:
+                            window[value].update(
+                                disabled = True)
+                            disabled = True
+                            save_alias(categories_list[int(i)], values[value])
+
         except ValueError as v_error:
             sg.popup_error(
                 f'The value {v_error} was out of bounds.',
@@ -2256,9 +2229,9 @@ def main_window(update):
          sg.FileBrowse(
             key='-FILE_BROWSE-',
             enable_events = True,
-            pad = (5, 0),
+            pad = (11, 0),
             button_color = BUTTON_COLOR,
-            font = ('Open Sans', 12, 'bold'),
+            font = ('Open Sans', 11, 'bold'),
             file_types = (('Current Inventory', '.xlsx'),)
             )
         ],
@@ -2266,10 +2239,10 @@ def main_window(update):
         sg.ProgressBar(
             100,
             orientation = 'h',
-            size = (37, 10),
+            size = (36.7, 10),
             key = '-P_BAR-',
             border_width = 0,
-            pad = ((5, 0), 0),
+            pad = ((5, 5), 0),
             bar_color = '#0D70E8 on #333',
             visible = False
             )
