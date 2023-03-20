@@ -1,14 +1,12 @@
 # Dispensary Menu Creator
-**Version:** 1.0.0
+**Version:** 1.0.1
 
 **Download Link:** https://drive.google.com/u/0/uc?id=1l6ef6J4XSu-b70IfCGji8KMB_HLj3np5&export=download
 
 # Recent Update:
 
-* First non-beta release!
-* NUMEROUS cosmetic improvements
-* Product categories can be viewed alongside their aliases, and can now also be deleted (Product Categories menu).
-* Code optimization
+* Minor bug fixes
+* Updated User Guide
 
 
 # About:
@@ -37,3 +35,14 @@ Requirements:
 Dispensary Menu Creator is licensed under the GNU General Public License Version 3.0. The full text of this license is available in the LICENSE file.
 
 Developed by Aaron Hitzeman <aaron.hitzeman@gmail.com>
+
+# Screenshots:
+![Main Window](https://github.com/hitzstuff/dispensary_menu_creator/blob/main/images/main_window_1.png?raw=true "Main Window")
+![Main Window - File Upload](https://github.com/hitzstuff/dispensary_menu_creator/blob/main/images/main_window_2.png?raw=true "Main Window - File Upload")
+![Discounted Products](https://github.com/hitzstuff/dispensary_menu_creator/blob/main/images/discounts.png?raw=true "Discounted Products")
+![Categories](https://github.com/hitzstuff/dispensary_menu_creator/blob/main/images/categories.png?raw=true "Categories")
+![Menu Configuration](https://github.com/hitzstuff/dispensary_menu_creator/blob/main/images/menu_locations.png?raw=true "Menu Configuration")
+![Menu Configuration](https://github.com/hitzstuff/dispensary_menu_creator/blob/main/images/menu_locations_2.png?raw=true "Menu Configuration")
+![Saved Menus](https://github.com/hitzstuff/dispensary_menu_creator/blob/main/images/saved_menus.png?raw=true "Saved Menus")\
+![Created Menu](https://github.com/hitzstuff/dispensary_menu_creator/blob/main/images/menu.png?raw=true "Created Menu")
+![About](https://github.com/hitzstuff/dispensary_menu_creator/blob/main/images/about.png?raw=true "About")
