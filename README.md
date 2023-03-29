@@ -1,13 +1,13 @@
 # Dispensary Menu Creator
-**Version:** 1.0.1
+**Version:** 1.0.2
 
-**Download Link:** https://drive.google.com/u/0/uc?id=1l6ef6J4XSu-b70IfCGji8KMB_HLj3np5&export=download
+**Download Link:** https://drive.google.com/u/0/uc?id=1XHAzU5TLoBKeQmCkRkdBMZSnrBVoePgY&export=download
 
 # Recent Update:
 
-* Minor bug fixes
-* Updated User Guide
-
+* Fixed a bug related to the menu assignment tool, when there are no available menus to be assigned.
+* Added a notification to the main screen, indicating how many categories are currently unassigned.
+* This release includes a Software Installer, to make it easier to install and update to future versions.
 
 # About:
 Flourish (https://www.flourishsoftware.com/) is a popular Retail Point of Sale for Cannabis dispensaries, and it allows a user to export a store's inventory into an Excel file.  Using this exported file...
