@@ -1,2 +1,3 @@
-'''Sets the displayed version number'''
-VERSION = '1.0.1'
+'''Program Name and Version info'''
+PROGRAM = 'Dispensary Menu Creator'
+VERSION = '1.0.2'

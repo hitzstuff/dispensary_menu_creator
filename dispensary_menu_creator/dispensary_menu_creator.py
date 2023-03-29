@@ -1303,6 +1303,9 @@ def cell_map_config():
             if alias != '':
                 window['-UNASSIGN_MENU-'].update(visible = True)
             if event in ['1', '2', '3', '4', '5', '6']:
+                for _ in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
+                    window[_].update(disabled = False,
+                    button_color = '#003B48 on #C7F9DC')
                 page = int(event)
                 try:
                     for _ in unassigned_menus[page]:
@@ -1350,12 +1353,17 @@ def cell_map_config():
                 window['-TITLE_L-'].update(f'Page: {page}  /  Menu: {menu}')
                 window['-TITLE_R-'].update(str(alias))
                 if prev_page != '' and prev_menu != '':
-                    if prev_menu in unassigned_menus[page]:
-                        window[str(prev_menu)].update(disabled = False,
-                                                      button_color = '#FFF on #9B9B9B')
-                    else:
-                        window[str(prev_menu)].update(disabled = False,
-                                                    button_color = '#003B48 on #C7F9DC')
+                    try:
+                        if prev_menu in unassigned_menus[page]:
+                            window[str(prev_menu)].update(disabled = False,
+                                                        button_color = '#FFF on #9B9B9B')
+                        else:
+                            window[str(prev_menu)].update(disabled = False,
+                                                        button_color = '#003B48 on #C7F9DC')
+                    except KeyError:
+                        for _ in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
+                            window[_].update(disabled = False,
+                                                            button_color = '#003B48 on #C7F9DC')
                     window[str(prev_page)].update(disabled = False,
                                                   button_color = '#003B48 on #C7F9DC')
                 prev_page = page
@@ -1827,7 +1835,7 @@ def categories_window():
             font = ('Open Sans', 11, 'bold'),
             background_color = '#FFF',
             text_color = '#F07B8B',
-            pad = (0, 2)),
+            pad = (0, 0)),
         text_label(
             _, 33, style=2),
         sg.Text(
@@ -1838,7 +1846,7 @@ def categories_window():
             font = ('Open Sans', 11, 'bold'),
             background_color = '#FFF',
             text_color = '#F07B8B',
-            pad = ((25, 2), 2)),
+            pad = ((25, 2), 0)),
         sg.Input(
                 alias_list[i],
                 key = f'-{i}_ALIAS-',
@@ -1849,25 +1857,28 @@ def categories_window():
                 justification = 'l',
                 border_width = 0,
                 disabled = True,
-                pad = (5, 2))
+                pad = (5, 0))
             ] for i, _ in enumerate(categories_list)
          ]
     layout = [
         [
         sg.Text('',
                 background_color = '#FFF',
-                pad = (27, 0)),
+                size = (6, 1),
+                ),
         sg.Text('Product Category',
                  font = ('Open Sans', 13, 'bold'),
                  text_color = '#0D70E8',
-                 pad = (5, 0),
+                 size = (36, 1),
+                 pad = (0, 0),
                  border_width = 0,
                  background_color = '#FFF',
                  ),
         sg.Text('Category Alias',
                  font = ('Open Sans', 13, 'bold'),
                  text_color = '#0D70E8',
-                 pad = ((240, 10), 0),
+                 size = (20, 1),
+                 pad = (0, 0),
                  border_width = 0,
                  background_color = '#FFF',
                  ),
@@ -1877,7 +1888,7 @@ def categories_window():
         sg.Column(column, scrollable=True,
                   vertical_scroll_only = True,
                   background_color = '#FFF',
-                  size = (770, 750))
+                  size = (770, 755))
             ],
         [sg.HSeparator(color = '#F7F9FC')],
         [sg.Button(
@@ -2266,6 +2277,25 @@ def main_window(update):
                    pad = ((379, 5), 20),
                    visible = False
                    )],
+        [
+        sg.Text('',
+                background_color = COL_2_BACKGROUND_COLOR,
+                size = (36, 1),
+                key = '-UNASSIGNED_CATEGORIES-',
+                justification = 'r',
+                font = ('Open Sans', 11, 'bold'),
+                text_color = '#0D70E8',
+                pad = (0, (WINDOW_HEIGHT - 180, 0))
+                ),
+        sg.Text(
+            'unassigned categories',
+            background_color = COL_2_BACKGROUND_COLOR,
+            justification = 'r',
+            font = ('Open Sans', 11),
+            text_color = '#0D70E8',
+            pad = (0, (WINDOW_HEIGHT - 180, 0))
+            )
+            ]
     ]
     layout = [
         [
@@ -2303,6 +2333,10 @@ def main():
                 else:
                     update = False
                 window = main_window(update)
+                unassigned_cat_list = unassigned_categories()
+                num_unassigned_categories = len(unassigned_cat_list)
+                window['-UNASSIGNED_CATEGORIES-'].update(num_unassigned_categories)
+                window.Refresh()
                 menu_list = [
                     '-SAVED_MENUS-',
                     '-DISCOUNTED_PRODUCTS-',
