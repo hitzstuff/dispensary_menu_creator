@@ -61,11 +61,7 @@ NEWEST_VERSION = str(parse_part[0])
 NEWEST_VERSION = NEWEST_VERSION.split()[-1][:-4]
 DOWNLOAD_LINK = str(parse_part[1])
 DOWNLOAD_LINK = ((DOWNLOAD_LINK.split()[-1][:-4]).split('>')[1]).split('<')[0]
-v1_stop = VERSION.find('-')
-v2_stop = NEWEST_VERSION.find('-')
-VERSION_1 = VERSION[0:v1_stop]
-VERSION_2 = NEWEST_VERSION[0:v2_stop]
-if VERSION_2 > VERSION_1:
+if NEWEST_VERSION > VERSION:
     AVAILABLE_UPDATE = True
 else:
     AVAILABLE_UPDATE = False
@@ -1472,7 +1468,7 @@ def discounts_window():
             if category != '':
                 alias = find_alias(category)
                 brand = str(category).split()
-                alias_list.append(f'{brand[1]} {alias}')
+                alias_list.append(f'{brand[0]} {alias}')
     column = [
         [text_label(
             _, 33, style=2),
@@ -1830,7 +1826,7 @@ def categories_window():
         [sg.Text(
             'delete',
             key = f'-{i}-',
-            size = (6, 1),
+            size = (7, 1),
             enable_events = True,
             font = ('Open Sans', 11, 'bold'),
             background_color = '#FFF',
@@ -1846,7 +1842,8 @@ def categories_window():
             font = ('Open Sans', 11, 'bold'),
             background_color = '#FFF',
             text_color = '#F07B8B',
-            pad = ((25, 2), 0)),
+            pad = (0, 0)
+            ),
         sg.Input(
                 alias_list[i],
                 key = f'-{i}_ALIAS-',
@@ -1864,12 +1861,12 @@ def categories_window():
         [
         sg.Text('',
                 background_color = '#FFF',
-                size = (6, 1),
+                size = (7, 1),
                 ),
         sg.Text('Product Category',
                  font = ('Open Sans', 13, 'bold'),
                  text_color = '#0D70E8',
-                 size = (36, 1),
+                 size = (34, 1),
                  pad = (0, 0),
                  border_width = 0,
                  background_color = '#FFF',
@@ -2198,16 +2195,16 @@ def main_window(update):
             ],
         [
         sg.Text(
-            f'Version:',
-            font = ('Open Sans', 11, 'bold'),
+            f'version:',
+            font = ('Open Sans', 10, 'bold'),
             text_color = '#0D70E8',
             pad = (3, 0),
             background_color = COL_1_BACKGROUND_COLOR
             ),
         sg.Text(f'{VERSION}',
-                font = ('Open Sans', 11),
+                font = ('Open Sans', 10),
                 text_color = '#0D70E8',
-                pad = (5, 0),
+                pad = (0, 0),
                 background_color = COL_1_BACKGROUND_COLOR
             ),
         ]
@@ -2277,23 +2274,27 @@ def main_window(update):
                    pad = ((379, 5), 20),
                    visible = False
                    )],
+        [sg.Text(pad = (0, WINDOW_HEIGHT / 200),
+                 background_color = '#FFF'
+        )],
         [
         sg.Text('',
                 background_color = COL_2_BACKGROUND_COLOR,
-                size = (36, 1),
+                size = (37, 1),
                 key = '-UNASSIGNED_CATEGORIES-',
                 justification = 'r',
                 font = ('Open Sans', 11, 'bold'),
                 text_color = '#0D70E8',
-                pad = (0, (WINDOW_HEIGHT - 180, 0))
+                pad = (0, ((WINDOW_HEIGHT / 2), 0))
                 ),
         sg.Text(
             'unassigned categories',
             background_color = COL_2_BACKGROUND_COLOR,
-            justification = 'r',
+            size = (40, 1),
+            justification = 'l',
             font = ('Open Sans', 11),
             text_color = '#0D70E8',
-            pad = (0, (WINDOW_HEIGHT - 180, 0))
+            pad = (0, ((WINDOW_HEIGHT / 2), 0))
             )
             ]
     ]
